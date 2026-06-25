@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🛒 Meine Einkaufsliste</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 16px 10px 30px;
+            background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+            background-attachment: fixed;
+        }
+
+        #app {
+            max-width: 480px;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 36px;
+            padding: 20px 14px 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .app-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .app-header .header-icon {
+            font-size: 24px;
+            background: rgba(255, 255, 255, 0.06);
+            width: 44px;
+            height: 44px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 4px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tab-btn {
+            flex: 0 0 auto;
+            padding: 8px 14px;
+            background: transparent;
+            border: none;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+            transform: scale(1.02);
+        }
+        .tab-btn:active { transform: scale(0.92); }
+
+        .tab-content {
+            display: none;
+            animation: fadeUp 0.25s ease;
+            max-height: 75vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+        .tab-content.active { display: block; }
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ---- KOMPAKTES GITTER FÜR 30+ ARTIKEL ---- */
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .preset-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 8px 2px 6px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 500;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            touch-action: manipulation;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            line-height: 1.1;
+        }
+        .preset-item .emoji {
+            font-size: 18px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        .preset-item:active {
+            transform: scale(0.88);
+            background: rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25);
+        }
+
+        /* WARENKORB */
+        .cart-section {
+            margin-top: 18px;
+            border-top: 2px dashed rgba(255, 255, 255, 0.06);
+            padding-top: 16px;
+        }
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .cart-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+        .cart-header .clear-cart-btn {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .cart-header .clear-cart-btn:active {
+            background: rgba(239, 68, 68, 0.25);
+            transform: scale(0.94);
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(4px);
+            padding: 8px 12px 8px 14px;
+            border-radius: 14px;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-left-width: 5px;
+        }
+        .cat-Getränke { border-left-color: #60a5fa; }
+        .cat-Lebensmittel { border-left-color: #fbbf24; }
+        .cat-Obst { border-left-color: #34d399; }
+        .cat-Haushalt { border-left-color: #a78bfa; }
+        .cat-Eigene { border-left-color: #64748b; }
+
+        .cart-item .item-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .cart-item .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+        .cart-item .category-tag {
+            font-size: 9px;
+            font-weight: 600;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 0 8px;
+            border-radius: 30px;
+            display: inline-block;
+            width: fit-content;
+            margin-top: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .cart-item .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cart-item .qty-controls button {
+            width: 30px;
+            height: 30px;
+            border-radius: 30px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.1s;
+        }
+        .cart-item .qty-controls button:active { transform: scale(0.88); }
+        .cart-item .qty-controls .btn-minus {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.1);
+        }
+        .cart-item .qty-controls .btn-plus {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.1);
+        }
+        .cart-item .qty-controls .qty-num {
+            font-size: 14px;
+            font-weight: 700;
+            min-width: 20px;
+            text-align: center;
+            color: #f1f5f9;
+        }
+        .cart-item .remove-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 16px;
+            padding: 0 0 0 6px;
+            cursor: pointer;
+        }
+        .cart-item .remove-btn:active { color: #f87171; transform: scale(1.2); }
+
+        .empty-cart {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            padding: 20px 0 14px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            border: 1px dashed rgba(255, 255, 255, 0.04);
+        }
+
+        .custom-add {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .custom-add input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.3);
+            color: #f8fafc;
+            outline: none;
+            transition: 0.2s;
+        }
+        .custom-add input::placeholder { color: #64748b; font-weight: 400; }
+        .custom-add input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .custom-add button {
+            padding: 0 20px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 22px;
+            font-weight: 300;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-add button:active {
+            transform: scale(0.92);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .stats {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 8px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .stats .total-items {
+            font-weight: 700;
+            color: #f1f5f9;
+            background: rgba(59, 130, 246, 0.15);
+            padding: 2px 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+        .stats .unique-count { font-weight: 500; color: #cbd5e1; }
+
+        @media (max-width: 420px) {
+            .item-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 5px; }
+            .preset-item { font-size: 9px; padding: 6px 2px 5px; border-radius: 10px; }
+            .preset-item .emoji { font-size: 15px; }
+            .tab-btn { font-size: 10px; padding: 6px 10px; }
+            .app-header h1 { font-size: 22px; }
+            #app { padding: 14px 10px 18px; }
+            .tab-content { max-height: 60vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="app-header">
+        <h1>🛒 Einkauf</h1>
+        <div class="header-icon">🧺</div>
+    </div>
+
+    <div class="tabs" id="tabHeaders">
+        <button class="tab-btn active" data-tab="getraenke">🥤 Getränke</button>
+        <button class="tab-btn" data-tab="lebensmittel">🍝 Lebensmittel</button>
+        <button class="tab-btn" data-tab="obst">🥦 Obst & Gemüse</button>
+        <button class="tab-btn" data-tab="haushalt">🧹 Haushalt</button>
+    </div>
+
+    <div id="tabContents">
+        <!-- ========== GETRÄNKE (36 Artikel - mit Whisky statt Kombucha) ========== -->
+        <div class="tab-content active" data-tab="getraenke">
+            <div class="item-grid" data-category="Getränke">
+                <div class="preset-item" data-name="Wasser"><span class="emoji">💧</span> Wasser</div>
+                <div class="preset-item" data-name="Cola"><span class="emoji">🥤</span> Cola</div>
+                <div class="preset-item" data-name="Fanta"><span class="emoji">🍊</span> Fanta</div>
+                <div class="preset-item" data-name="Sprite"><span class="emoji">🍋</span> Sprite</div>
+                <div class="preset-item" data-name="Bier"><span class="emoji">🍺</span> Bier</div>
+                <div class="preset-item" data-name="Wein"><span class="emoji">🍷</span> Wein</div>
+                <div class="preset-item" data-name="Milch"><span class="emoji">🥛</span> Milch</div>
+                <div class="preset-item" data-name="Saft"><span class="emoji">🧃</span> Saft</div>
+                <div class="preset-item" data-name="Eistee"><span class="emoji">🧊</span> Eistee</div>
+                <div class="preset-item" data-name="Limonade"><span class="emoji">🍹</span> Limonade</div>
+                <div class="preset-item" data-name="Energy"><span class="emoji">⚡</span> Energy</div>
+                <div class="preset-item" data-name="Kaffee"><span class="emoji">☕</span> Kaffee</div>
+                <div class="preset-item" data-name="Tee"><span class="emoji">🍵</span> Tee</div>
+                <div class="preset-item" data-name="Kakao"><span class="emoji">🍫</span> Kakao</div>
+                <div class="preset-item" data-name="Mate"><span class="emoji">🧉</span> Mate</div>
+                <div class="preset-item" data-name="Red Bull"><span class="emoji">🐂</span> Red Bull</div>
+                <div class="preset-item" data-name="Ginger Ale"><span class="emoji">🫚</span> Ginger Ale</div>
+                <div class="preset-item" data-name="Kokoswasser"><span class="emoji">🥥</span> Kokoswasser</div>
+                <div class="preset-item" data-name="Apfelschorle"><span class="emoji">🍏</span> Apfelschorle</div>
+                <div class="preset-item" data-name="Orangensaft"><span class="emoji">🍊</span> O-Saft</div>
+                <div class="preset-item" data-name="Traubensaft"><span class="emoji">🍇</span> Traubensaft</div>
+                <div class="preset-item" data-name="Multivitamin"><span class="emoji">🥤</span> Multivitamin</div>
+                <div class="preset-item" data-name="Ice Tea"><span class="emoji">🧊</span> Ice Tea</div>
+                <div class="preset-item" data-name="Spezi"><span class="emoji">🫧</span> Spezi</div>
+                <div class="preset-item" data-name="Club Mate"><span class="emoji">🧉</span> Club Mate</div>
+                <div class="preset-item" data-name="Fassbrause"><span class="emoji">🍺</span> Fassbrause</div>
+                <div class="preset-item" data-name="Malzbier"><span class="emoji">🍺</span> Malzbier</div>
+                <!-- Kombucha ersetzt durch Whisky -->
+                <div class="preset-item" data-name="Whisky"><span class="emoji">🥃</span> Whisky</div>
+                <div class="preset-item" data-name="Smoothie"><span class="emoji">🥤</span> Smoothie</div>
+                <div class="preset-item" data-name="Milkshake"><span class="emoji">🥤</span> Milkshake</div>
+                <div class="preset-item" data-name="Fritz Cola"><span class="emoji">🥤</span> Fritz Cola</div>
+                <div class="preset-item" data-name="Rhabarbersaft"><span class="emoji">🍹</span> Rhabarbersaft</div>
+                <div class="preset-item" data-name="Himbeersirup"><span class="emoji">🍓</span> Himbeersirup</div>
+                <div class="preset-item" data-name="Waldmeister"><span class="emoji">🌿</span> Waldmeister</div>
+                <div class="preset-item" data-name="Tonic Water"><span class="emoji">💧</span> Tonic Water</div>
+                <div class="preset-item" data-name="Bitter Lemon"><span class="emoji">🍋</span> Bitter Lemon</div>
+            </div>
+        </div>
+
+        <!-- ========== LEBENSMITTEL (36 Artikel) ========== -->
+        <div class="tab-content" data-tab="lebensmittel">
+            <div class="item-grid" data-category="Lebensmittel">
+                <div class="preset-item" data-name="Brot"><span class="emoji">🍞</span> Brot</div>
+                <div class="preset-item" data-name="Brötchen"><span class="emoji">🥖</span> Brötchen</div>
+                <div class="preset-item" data-name="Nudeln"><span class="emoji">🍝</span> Nudeln</div>
+                <div class="preset-item" data-name="Reis"><span class="emoji">🍚</span> Reis</div>
+                <div class="preset-item" data-name="Kartoffeln"><span class="emoji">🥔</span> Kartoffeln</div>
+                <div class="preset-item" data-name="Eier"><span class="emoji">🥚</span> Eier</div>
+                <div class="preset-item" data-name="Butter"><span class="emoji">🧈</span> Butter</div>
+                <div class="preset-item" data-name="Käse"><span class="emoji">🧀</span> Käse</div>
+                <div class="preset-item" data-name="Mehl"><span class="emoji">🌾</span> Mehl</div>
+                <div class="preset-item" data-name="Zucker"><span class="emoji">🍬</span> Zucker</div>
+                <div class="preset-item" data-name="Salz"><span class="emoji">🧂</span> Salz</div>
+                <div class="preset-item" data-name="Öl"><span class="emoji">🫒</span> Öl</div>
+                <div class="preset-item" data-name="Essig"><span class="emoji">🧪</span> Essig</div>
+                <div class="preset-item" data-name="Konserven"><span class="emoji">🥫</span> Konserven</div>
+                <div class="preset-item" data-name="Haferflocken"><span class="emoji">🌾</span> Haferflocken</div>
+                <div class="preset-item" data-name="Cornflakes"><span class="emoji">🥣</span> Cornflakes</div>
+                <div class="preset-item" data-name="Toast"><span class="emoji">🍞</span> Toast</div>
+                <div class="preset-item" data-name="Senf"><span class="emoji">🌭</span> Senf</div>
+                <div class="preset-item" data-name="Ketchup"><span class="emoji">🍅</span> Ketchup</div>
+                <div class="preset-item" data-name="Mayo"><span class="emoji">🧴</span> Mayo</div>
+                <div class="preset-item" data-name="Pesto"><span class="emoji">🌿</span> Pesto</div>
+                <div class="preset-item" data-name="Curry"><span class="emoji">🍛</span> Curry</div>
+                <div class="preset-item" data-name="Paprika"><span class="emoji">🌶️</span> Paprika</div>
+                <div class="preset-item" data-name="Pfeffer"><span class="emoji">🫑</span> Pfeffer</div>
+                <div class="preset-item" data-name="Tomatensoße"><span class="emoji">🍅</span> Tomatensoße</div>
+                <div class="preset-item" data-name="Bratensoße"><span class="emoji">🍖</span> Bratensoße</div>
+                <div class="preset-item" data-name="Brühe"><span class="emoji">🥣</span> Brühe</div>
+                <div class="preset-item" data-name="Fisch"><span class="emoji">🐟</span> Fisch</div>
+                <div class="preset-item" data-name="Hähnchen"><span class="emoji">🍗</span> Hähnchen</div>
+                <div class="preset-item" data-name="Rinderhack"><span class="emoji">🥩</span> Rinderhack</div>
+                <div class="preset-item" data-name="Wurst"><span class="emoji">🌭</span> Wurst</div>
+                <div class="preset-item" data-name="Schinken"><span class="emoji">🥓</span> Schinken</div>
+                <div class="preset-item" data-name="Tofu"><span class="emoji">🧆</span> Tofu</div>
+                <div class="preset-item" data-name="Quark"><span class="emoji">🥛</span> Quark</div>
+                <div class="preset-item" data-name="Joghurt"><span class="emoji">🫐</span> Joghurt</div>
+                <div class="preset-item" data-name="Pudding"><span class="emoji">🍮</span> Pudding</div>
+            </div>
+        </div>
+
+        <!-- ========== OBST & GEMÜSE (36 Artikel) ========== -->
+        <div class="tab-content" data-tab="obst">
+            <div class="item-grid" data-category="Obst & Gemüse">
+                <div class="preset-item" data-name="Äpfel"><span class="emoji">🍎</span> Äpfel</div>
+                <div class="preset-item" data-name="Bananen"><span class="emoji">🍌</span> Bananen</div>
+                <div class="preset-item" data-name="Orangen"><span class="emoji">🍊</span> Orangen</div>
+                <div class="preset-item" data-name="Trauben"><span class="emoji">🍇</span> Trauben</div>
+                <div class="preset-item" data-name="Salat"><span class="emoji">🥬</span> Salat</div>
+                <div class="preset-item" data-name="Tomaten"><span class="emoji">🍅</span> Tomaten</div>
+                <div class="preset-item" data-name="Gurke"><span class="emoji">🥒</span> Gurke</div>
+                <div class="preset-item" data-name="Paprika"><span class="emoji">🫑</span> Paprika</div>
+                <div class="preset-item" data-name="Karotten"><span class="emoji">🥕</span> Karotten</div>
+                <div class="preset-item" data-name="Zwiebeln"><span class="emoji">🧅</span> Zwiebeln</div>
+                <div class="preset-item" data-name="Knoblauch"><span class="emoji">🧄</span> Knoblauch</div>
+                <div class="preset-item" data-name="Zitronen"><span class="emoji">🍋</span> Zitronen</div>
+                <div class="preset-item" data-name="Avocado"><span class="emoji">🥑</span> Avocado</div>
+                <div class="preset-item" data-name="Pilze"><span class="emoji">🍄</span> Pilze</div>
+                <div class="preset-item" data-name="Ananas"><span class="emoji">🍍</span> Ananas</div>
+                <div class="preset-item" data-name="Kiwi"><span class="emoji">🥝</span> Kiwi</div>
+                <div class="preset-item" data-name="Spinat"><span class="emoji">🌿</span> Spinat</div>
+                <div class="preset-item" data-name="Rucola"><span class="emoji">🌱</span> Rucola</div>
+                <div class="preset-item" data-name="Zucchini"><span class="emoji">🥒</span> Zucchini</div>
+                <div class="preset-item" data-name="Kürbis"><span class="emoji">🎃</span> Kürbis</div>
+                <div class="preset-item" data-name="Brokkoli"><span class="emoji">🥦</span> Brokkoli</div>
+                <div class="preset-item" data-name="Blumenkohl"><span class="emoji">🌼</span> Blumenkohl</div>
+                <div class="preset-item" data-name="Rosenkohl"><span class="emoji">🥬</span> Rosenkohl</div>
+                <div class="preset-item" data-name="Aubergine"><span class="emoji">🍆</span> Aubergine</div>
+                <div class="preset-item" data-name="Chili"><span class="emoji">🌶️</span> Chili</div>
+                <div class="preset-item" data-name="Ingwer"><span class="emoji">🫚</span> Ingwer</div>
+                <div class="preset-item" data-name="Mango"><span class="emoji">🥭</span> Mango</div>
+                <div class="preset-item" data-name="Papaya"><span class="emoji">🫒</span> Papaya</div>
+                <div class="preset-item" data-name="Granatapfel"><span class="emoji">🫐</span> Granatapfel</div>
+                <div class="preset-item" data-name="Erdbeeren"><span class="emoji">🍓</span> Erdbeeren</div>
+                <div class="preset-item" data-name="Himbeeren"><span class="emoji">🫐</span> Himbeeren</div>
+                <div class="preset-item" data-name="Blaubeeren"><span class="emoji">🫐</span> Blaubeeren</div>
+                <div class="preset-item" data-name="Kirsche"><span class="emoji">🍒</span> Kirsche</div>
+                <div class="preset-item" data-name="Pflaumen"><span class="emoji">🫐</span> Pflaumen</div>
+                <div class="preset-item" data-name="Birnen"><span class="emoji">🍐</span> Birnen</div>
+                <div class="preset-item" data-name="Radieschen"><span class="emoji">🫘</span> Radieschen</div>
+            </div>
+        </div>
+
+        <!-- ========== HAUSHALT (36 Artikel) ========== -->
+        <div class="tab-content" data-tab="haushalt">
+            <div class="item-grid" data-category="Haushalt & Hygiene">
+                <div class="preset-item" data-name="Klopapier"><span class="emoji">🧻</span> Klopapier</div>
+                <div class="preset-item" data-name="Spülmittel"><span class="emoji">🧴</span> Spülmittel</div>
+                <div class="preset-item" data-name="Waschmittel"><span class="emoji">🧺</span> Waschmittel</div>
+                <div class="preset-item" data-name="Müllbeutel"><span class="emoji">🗑️</span> Müllbeutel</div>
+                <div class="preset-item" data-name="Zahnpasta"><span class="emoji">🪥</span> Zahnpasta</div>
+                <div class="preset-item" data-name="Shampoo"><span class="emoji">🧴</span> Shampoo</div>
+                <div class="preset-item" data-name="Seife"><span class="emoji">🧼</span> Seife</div>
+                <div class="preset-item" data-name="Putzmittel"><span class="emoji">🧽</span> Putzmittel</div>
+                <div class="preset-item" data-name="Zahnbürste"><span class="emoji">🪥</span> Zahnbürste</div>
+                <div class="preset-item" data-name="Deo"><span class="emoji">💨</span> Deo</div>
+                <div class="preset-item" data-name="Rasierer"><span class="emoji">🪒</span> Rasierer</div>
+                <div class="preset-item" data-name="Taschentücher"><span class="emoji">🤧</span> Taschentücher</div>
+                <div class="preset-item" data-name="Backpapier"><span class="emoji">📄</span> Backpapier</div>
+                <div class="preset-item" data-name="Alufolie"><span class="emoji">✨</span> Alufolie</div>
+                <div class="preset-item" data-name="Glasreiniger"><span class="emoji">🪟</span> Glasreiniger</div>
+                <div class="preset-item" data-name="Batterien"><span class="emoji">🔋</span> Batterien</div>
+                <div class="preset-item" data-name="Luftreiniger"><span class="emoji">💨</span> Luftreiniger</div>
+                <div class="preset-item" data-name="Schwämme"><span class="emoji">🧽</span> Schwämme</div>
+                <div class="preset-item" data-name="Mülltrennung"><span class="emoji">♻️</span> Mülltrennung</div>
+                <div class="preset-item" data-name="Kerzen"><span class="emoji">🕯️</span> Kerzen</div>
+                <div class="preset-item" data-name="Duftkerzen"><span class="emoji">🕯️</span> Duftkerzen</div>
+                <div class="preset-item" data-name="Lufterfrischer"><span class="emoji">🌺</span> Lufterfrischer</div>
+                <div class="preset-item" data-name="Mückenschutz"><span class="emoji">🦟</span> Mückenschutz</div>
+                <div class="preset-item" data-name="Sonnencreme"><span class="emoji">☀️</span> Sonnencreme</div>
+                <div class="preset-item" data-name="Handcreme"><span class="emoji">🧴</span> Handcreme</div>
+                <div class="preset-item" data-name="Nagelfeile"><span class="emoji">💅</span> Nagelfeile</div>
+                <div class="preset-item" data-name="Pinzette"><span class="emoji">🪮</span> Pinzette</div>
+                <div class="preset-item" data-name="Schere"><span class="emoji">✂️</span> Schere</div>
+                <div class="preset-item" data-name="Kleber"><span class="emoji">🫙</span> Kleber</div>
+                <div class="preset-item" data-name="Panzerband"><span class="emoji">🫙</span> Panzerband</div>
+                <div class="preset-item" data-name="Geschenkpapier"><span class="emoji">🎁</span> Geschenkpapier</div>
+                <div class="preset-item" data-name="Geschenkband"><span class="emoji">🎀</span> Geschenkband</div>
+                <div class="preset-item" data-name="Briefmarken"><span class="emoji">✉️</span> Briefmarken</div>
+                <div class="preset-item" data-name="Umschläge"><span class="emoji">✉️</span> Umschläge</div>
+                <div class="preset-item" data-name="Notizzettel"><span class="emoji">📝</span> Notizzettel</div>
+                <div class="preset-item" data-name="Kugelschreiber"><span class="emoji">🖊️</span> Kugelschreiber</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WARENKORB -->
+    <div class="cart-section">
+        <div class="cart-header">
+            <h2>🧺 Warenkorb</h2>
+            <button class="clear-cart-btn" id="clearCartBtn">Leeren</button>
+        </div>
+        <div id="cartContainer">
+            <div class="empty-cart">✨ Tippe auf einen Artikel oben, um ihn einzupacken!</div>
+        </div>
+
+        <div class="custom-add">
+            <input type="text" id="customItemInput" placeholder="Seltenen Artikel hier... (z.B. Kapern)">
+            <button id="addCustomBtn">+</button>
+        </div>
+
+        <div class="stats">
+            <span>📦 <span class="total-items" id="totalItems">0</span> Stück</span>
+            <span class="unique-count">🧾 <span id="uniqueCount">0</span> verschieden</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        const cartContainer = document.getElementById('cartContainer');
+        const customInput = document.getElementById('customItemInput');
+        const addCustomBtn = document.getElementById('addCustomBtn');
+        const clearCartBtn = document.getElementById('clearCartBtn');
+        const totalItemsSpan = document.getElementById('totalItems');
+        const uniqueCountSpan = document.getElementById('uniqueCount');
+
+        const STORAGE_KEY = 'shopping_cart_tabs';
+        let cart = [];
+
+        function loadCart() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) { cart = parsed; return; }
+                }
+                cart = [];
+            } catch (e) { cart = []; }
+        }
+
+        function saveCart() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+        }
+
+        function renderCart() {
+            if (cart.length === 0) {
+                cartContainer.innerHTML = '<div class="empty-cart">✨ Tippe auf einen Artikel oben, um ihn einzupacken!</div>';
+                updateStats();
+                return;
+            }
+
+            let html = '';
+            cart.forEach((item, index) => {
+                const catClass = 'cat-' + (item.category || 'Eigene').replace(/\s/g, '');
+                html += `
+                    <div class="cart-item ${catClass}" data-index="${index}">
+                        <div class="item-info">
+                            <span class="name">${item.name}</span>
+                            <span class="category-tag">${item.category || 'Eigene'}</span>
+                        </div>
+                        <div class="qty-controls">
+                            <button class="btn-minus" data-index="${index}">−</button>
+                            <span class="qty-num">${item.qty}</span>
+                            <button class="btn-plus" data-index="${index}">+</button>
+                            <button class="remove-btn" data-index="${index}">✕</button>
+                        </div>
+                    </div>
+                `;
+            });
+            cartContainer.innerHTML = html;
+
+            cartContainer.querySelectorAll('.btn-minus').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.index);
+                    changeQty(idx, -1);
+                });
+            });
+            cartContainer.querySelectorAll('.btn-plus').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.index);
+                    changeQty(idx, 1);
+                });
+            });
+            cartContainer.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.index);
+                    removeItem(idx);
+                });
+            });
+
+            updateStats();
+        }
+
+        function updateStats() {
+            let total = 0;
+            cart.forEach(item => total += item.qty);
+            totalItemsSpan.textContent = total;
+            uniqueCountSpan.textContent = cart.length;
+        }
+
+        function addToCart(name, category) {
+            if (!name || name.trim() === '') return;
+            name = name.trim();
+            const existing = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ name: name, category: category || 'Eigene', qty: 1 });
+            }
+            saveCart();
+            renderCart();
+        }
+
+        function changeQty(index, delta) {
+            if (index < 0 || index >= cart.length) return;
+            const newQty = cart[index].qty + delta;
+            if (newQty <= 0) {
+                cart.splice(index, 1);
+            } else {
+                cart[index].qty = newQty;
+            }
+            saveCart();
+            renderCart();
+        }
+
+        function removeItem(index) {
+            if (index < 0 || index >= cart.length) return;
+            cart.splice(index, 1);
+            saveCart();
+            renderCart();
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('Wirklich den gesamten Warenkorb leeren?')) {
+                cart = [];
+                saveCart();
+                renderCart();
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (btn) btn.classList.add('active');
+            const content = document.querySelector(`.tab-content[data-tab="${tabId}"]`);
+            if (content) content.classList.add('active');
+        }
+
+        function setupPresetItems() {
+            document.querySelectorAll('.preset-item').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    const name = this.dataset.name;
+                    const grid = this.closest('.item-grid');
+                    const category = grid ? grid.dataset.category : 'Eigene';
+                    addToCart(name, category);
+
+                    this.style.transform = 'scale(0.88)';
+                    this.style.transition = 'transform 0.08s';
+                    setTimeout(() => { this.style.transform = ''; }, 120);
+                });
+            });
+        }
+
+        function addCustomItem() {
+            const name = customInput.value.trim();
+            if (name === '') {
+                customInput.focus();
+                return;
+            }
+            addToCart(name, 'Eigene');
+            customInput.value = '';
+            customInput.focus();
+        }
+
+        function init() {
+            loadCart();
+            renderCart();
+            setupPresetItems();
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    switchTab(tabId);
+                });
+            });
+
+            addCustomBtn.addEventListener('click', addCustomItem);
+            customInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomItem();
+                }
+            });
+
+            clearCartBtn.addEventListener('click', clearCart);
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>
